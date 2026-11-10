@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ikky Media - portal berita dan publikasi informasi.">
+  <title>Ikky Media — Portal Berita</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="topline"><div class="wrap top-inner"><span>INFORMASI • INSPIRASI • AKTUAL</span><span id="today"></span></div></div>
+  <header class="site-header">
+    <div class="wrap nav">
+      <a class="brand" href="#" aria-label="Ikky Media beranda"><span class="brand-mark">I</span><span>IKKY<span class="brand-light">MEDIA</span><small>PORTAL INFORMASI</small></span></a>
+      <nav id="mainNav"><a href="#terbaru">Berita</a><a href="#kategori">Kategori</a><a href="#tentang">Tentang</a></nav>
+      <button class="menu-btn" id="menuBtn" aria-label="Buka menu">☰</button>
+      <button class="admin-link" id="adminOpen">Admin <span>↗</span></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="live-dot"></span> PORTAL BERITA INDEPENDEN</div>
+        <h1>Informasi Aktual,<br><em>Inspirasi Tanpa Batas.</em></h1>
+        <p>Menghadirkan kabar, cerita, dan informasi yang bermakna dari dunia pendidikan, teknologi, dan masyarakat.</p>
+        <a class="primary-btn" href="#terbaru">Jelajahi berita <span>→</span></a>
+      </div>
+      <div class="hero-art">
+        <div class="art-label">IKKY MEDIA <span>●</span> UPDATE</div>
+        <div class="art-big">NEWS<br><i>&amp; STORIES</i></div>
+        <div class="art-bottom"><span>MEMBACA DUNIA<br>DARI BERBAGAI SUDUT</span><b>IM.</b></div>
+      </div>
+    </section>
+
+    <section class="ticker"><div class="wrap ticker-inner"><b>IKKY UPDATE</b><span>Ruang informasi untuk karya, gagasan, dan kabar terbaru.</span><span class="ticker-arrow">↗</span></div></section>
+
+    <section class="section wrap" id="terbaru">
+      <div class="section-head"><div><div class="eyebrow">KABAR PILIHAN</div><h2>Berita <em>Terbaru</em></h2></div><span class="section-note">Informasi terkini dari Ikky Media</span></div>
+      <div class="filters" id="filters">
+        <button class="filter active" data-category="Semua">Semua</button>
+        <button class="filter" data-category="Pendidikan">Pendidikan</button>
+        <button class="filter" data-category="Teknologi">Teknologi</button>
+        <button class="filter" data-category="Masyarakat">Masyarakat</button>
+        <button class="filter" data-category="Kegiatan">Kegiatan</button>
+      </div>
+      <div id="articleGrid" class="article-grid"><div class="loading">Memuat berita...</div></div>
+      <div id="emptyState" class="empty-state hidden">Belum ada artikel yang dipublikasikan.</div>
+    </section>
+
+    <section class="about-band" id="tentang"><div class="wrap about-inner"><div><div class="eyebrow light">TENTANG KAMI</div><h2>Setiap cerita<br>layak <em>diketahui.</em></h2></div><p>Ikky Media merupakan ruang publikasi informasi dan dokumentasi kegiatan. Kami berupaya menyajikan konten yang informatif, jelas, dan mudah diakses oleh pembaca.</p></div></section>
+  </main>
+
+  <footer><div class="wrap footer-inner"><a class="brand footer-brand" href="#"><span class="brand-mark">I</span><span>IKKY<span class="brand-light">MEDIA</span><small>PORTAL INFORMASI</small></span></a><span>© <span id="year"></span> Ikky Media. Hak cipta dilindungi.</span><a href="mailto:redaksi@ikkymedia.id">Hubungi Redaksi ↗</a></div></footer>
+
+  <!-- Article reader -->
+  <div class="modal hidden" id="articleModal"><div class="modal-backdrop" data-close="articleModal"></div><article class="reader modal-panel"><button class="close-btn" data-close="articleModal">×</button><div id="readerContent"></div></article></div>
+
+  <!-- Admin panel -->
+  <div class="modal hidden" id="adminModal"><div class="modal-backdrop" data-close="adminModal"></div><section class="admin-panel modal-panel">
+    <button class="close-btn" data-close="adminModal">×</button>
+    <div class="admin-heading"><div class="eyebrow">IKKY MEDIA CMS</div><h2>Dashboard <em>Admin</em></h2><p>Kelola artikel dan publikasi portal.</p></div>
+    <div id="loginBox" class="login-box">
+      <label>Email admin<input id="loginEmail" type="email" placeholder="email-admin@domain.com" autocomplete="username"></label>
+      <label>Password<input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"></label>
+      <button class="primary-btn full" id="loginBtn">Masuk dashboard <span>→</span></button>
+      <p class="form-note">Akun admin dibuat melalui Supabase Authentication. Pendaftaran publik tidak tersedia.</p>
+    </div>
+    <div id="dashboard" class="hidden">
+      <div class="dash-top"><span id="adminIdentity"></span><button class="text-btn" id="logoutBtn">Keluar ↗</button></div>
+      <div class="dash-tabs"><button class="tab active" data-tab="editor">Tulis artikel</button><button class="tab" data-tab="manage">Kelola artikel</button></div>
+      <div id="editorTab">
+        <form id="articleForm">
+          <input type="hidden" id="articleId">
+          <label>Judul artikel<input id="articleTitle" required maxlength="180" placeholder="Masukkan judul artikel"></label>
+          <div class="form-row">
+            <label>Kategori<select id="articleCategory"><option>Pendidikan</option><option>Teknologi</option><option>Masyarakat</option><option>Kegiatan</option><option>Umum</option></select></label>
+            <label>Penulis<input id="articleAuthor" maxlength="80" value="Redaksi Ikky Media"></label>
+          </div>
+          <label>Ringkasan<input id="articleExcerpt" maxlength="240" placeholder="Ringkasan singkat untuk halaman utama"></label>
+          <label>Foto utama<input id="articleImage" type="file" accept="image/png,image/jpeg,image/webp,image/heic"></label>
+          <div id="imagePreview" class="image-preview hidden"></div>
+          <label>Isi artikel<textarea id="articleBody" required rows="10" placeholder="Tulis isi artikel di sini..."></textarea></label>
+          <div class="form-row status-row"><label>Status<select id="articleStatus"><option value="draft">Simpan sebagai draft</option><option value="published">Publikasikan</option></select></label><span class="form-note">Artikel publik akan tampil di beranda.</span></div>
+          <div class="editor-actions"><button type="submit" class="primary-btn" id="saveBtn">Simpan artikel <span>→</span></button><button type="button" class="text-btn hidden" id="cancelEdit">Batal edit</button></div>
+          <p id="formMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
+      <div id="manageTab" class="hidden"><div id="adminArticles" class="admin-articles">Memuat artikel...</div></div>
+    </div>
+  </section></div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
