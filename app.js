@@ -39,9 +39,26 @@
   $("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;currentCategory=b.dataset.category;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===b));renderArticles();});
   $("adminOpen").onclick=()=>{modal("adminModal",true);refreshAuth();};
   $("menuBtn").onclick=()=>$("mainNav").classList.toggle("open");
+  $("submitPressLink").onclick=e=>{e.preventDefault();modal("submitModal",true);$("mainNav").classList.remove("open");};
+  $("submissionForm").onsubmit=async e=>{
+    e.preventDefault();if(!client){$("submissionMessage").textContent="Layanan belum terhubung.";return;}
+    const btn=$("submitPressBtn"),file=$("submissionImage").files[0];btn.disabled=true;$("submissionMessage").textContent="Mengirim press release...";
+    try{
+      let imageUrl=null;
+      if(file){if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("Foto harus JPG, PNG, atau WebP.");if(file.size>5*1024*1024)throw new Error("Ukuran foto maksimal 5 MB.");
+        const ext=file.name.split(".").pop().toLowerCase(),path=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const {error:upErr}=await client.storage.from("press-release-submissions").upload(path,file,{contentType:file.type,upsert:false});if(upErr)throw upErr;
+        imageUrl=client.storage.from("press-release-submissions").getPublicUrl(path).data.publicUrl;
+      }
+      const payload={submitter_name:$("submitterName").value.trim(),submitter_email:$("submitterEmail").value.trim(),submitter_phone:$("submitterPhone").value.trim(),title:$("submissionTitle").value.trim(),category:$("submissionCategory").value,excerpt:$("submissionExcerpt").value.trim(),body:$("submissionBody").value.trim(),image_url:imageUrl,status:"pending"};
+      const {data,error}=await client.from("press_submissions").insert(payload).select("id").single();if(error)throw error;
+      try{await fetch(`${cfg.SUPABASE_URL}/functions/v1/notify-submission`,{method:"POST",headers:{"Content-Type":"application/json",apikey:cfg.SUPABASE_ANON_KEY,Authorization:`Bearer ${cfg.SUPABASE_ANON_KEY}`},body:JSON.stringify({submission_id:data.id})});}catch(mailErr){console.warn("Notifikasi email belum terkirim",mailErr);}
+      $("submissionForm").reset();$("submissionMessage").textContent="Berhasil dikirim! Redaksi akan memeriksa press release kamu sebelum diterbitkan.";toast("Press release berhasil dikirim.");
+    }catch(err){$("submissionMessage").textContent="Gagal: "+err.message;console.error(err);}finally{btn.disabled=false;}
+  };
   document.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",()=>modal(el.dataset.close,false)));
   document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-  function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));$("editorTab").classList.toggle("hidden",tab!=="editor");$("manageTab").classList.toggle("hidden",tab!=="manage");if(tab==="manage")loadAdminArticles();}
+  function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));$("editorTab").classList.toggle("hidden",tab!=="editor");$("manageTab").classList.toggle("hidden",tab!=="manage");$("submissionsTab").classList.toggle("hidden",tab!=="submissions");if(tab==="manage")loadAdminArticles();if(tab==="submissions")loadSubmissions();}
   async function refreshAuth(){
     if(!client){$("loginBox").classList.remove("hidden");$("dashboard").classList.add("hidden");$("loginBox").querySelector(".form-note").textContent="Konfigurasi Supabase belum diisi. Ikuti README.md terlebih dahulu.";return;}
     const {data}=await client.auth.getSession();
@@ -93,6 +110,24 @@
     $("adminArticles").innerHTML=(data||[]).map(a=>`<div class="admin-item"><div><strong>${escapeHtml(a.title)}</strong><small>${escapeHtml(a.category)} · ${a.status==="published"?"Terbit":"Draft"} · ${dateText(a.created_at)}</small></div><div class="admin-item-actions"><button data-edit="${a.id}">Edit</button><button class="delete" data-delete="${a.id}">Hapus</button></div></div>`).join("")||'<p class="form-note">Belum ada artikel.</p>';
     $("adminArticles").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editArticle(b.dataset.edit));
     $("adminArticles").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteArticle(b.dataset.delete));
+  }
+  async function loadSubmissions(){
+    const box=$("publicSubmissions");box.textContent="Memuat kiriman...";
+    const {data,error}=await client.from("press_submissions").select("*").order("created_at",{ascending:false});
+    if(error){box.textContent="Gagal memuat kiriman: "+error.message;return;}
+    box.innerHTML=(data||[]).map(s=>`<div class="admin-item"><div><strong>${escapeHtml(s.title)}</strong><small>${escapeHtml(s.submitter_name)} · ${escapeHtml(s.category)} · ${dateText(s.created_at)} · ${s.status==="pending"?"Menunggu review":s.status==="approved"?"Disetujui":"Ditolak"}</small><small>${escapeHtml(s.submitter_email)} · ${escapeHtml(s.submitter_phone)}</small></div><div class="admin-item-actions"><button data-review="${s.id}">Periksa</button></div></div>`).join("")||'<p class="form-note">Belum ada kiriman publik.</p>';
+    box.querySelectorAll("[data-review]").forEach(b=>b.onclick=()=>reviewSubmission(b.dataset.review));
+  }
+  async function reviewSubmission(id){
+    const {data:s,error}=await client.from("press_submissions").select("*").eq("id",id).single();if(error){toast(error.message);return;}
+    const action=prompt(`Press release: ${s.title}\nPengirim: ${s.submitter_name}\nEmail: ${s.submitter_email}\n\nIsi: ${s.body}\n\nKetik SETUJU untuk menerbitkan atau TOLAK untuk menolak.`);
+    if(!action)return;const choice=action.trim().toUpperCase();if(!["SETUJU","TOLAK"].includes(choice)){toast("Pilihan tidak dikenali.");return;}
+    if(choice==="SETUJU"){
+      const slug=s.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")+"-"+Date.now().toString().slice(-5);
+      const {error:insErr}=await client.from("articles").insert({title:s.title,slug,category:s.category,author:s.submitter_name,excerpt:s.excerpt||"",body:s.body,image_url:s.image_url,status:"published",published_at:new Date().toISOString()});if(insErr){toast("Gagal menerbitkan: "+insErr.message);return;}
+    }
+    const {error:upErr}=await client.from("press_submissions").update({status:choice==="SETUJU"?"approved":"rejected"}).eq("id",id);if(upErr){toast(upErr.message);return;}
+    toast(choice==="SETUJU"?"Kiriman diterbitkan.":"Kiriman ditolak.");await loadSubmissions();await loadPublic();
   }
   async function editArticle(id){
     const {data,error}=await client.from("articles").select("*").eq("id",id).single();if(error){toast(error.message);return;}

@@ -15,7 +15,7 @@
   <header class="site-header">
     <div class="wrap nav">
       <a class="brand" href="#" aria-label="Ikky Media beranda"><span class="brand-mark">I</span><span>IKKY<span class="brand-light">MEDIA</span><small>PORTAL INFORMASI</small></span></a>
-      <nav id="mainNav"><a href="#terbaru">Berita</a><a href="#kategori">Kategori</a><a href="#tentang">Tentang</a></nav>
+      <nav id="mainNav"><a href="#terbaru">Berita</a><a href="#kategori">Kategori</a><a href="#tentang">Tentang</a><a href="#" id="submitPressLink">Kirim Press Release</a></nav>
       <button class="menu-btn" id="menuBtn" aria-label="Buka menu">☰</button>
       <button class="admin-link" id="adminOpen">Admin <span>↗</span></button>
     </div>
@@ -56,6 +56,23 @@
 
   <footer><div class="wrap footer-inner"><a class="brand footer-brand" href="#"><span class="brand-mark">I</span><span>IKKY<span class="brand-light">MEDIA</span><small>PORTAL INFORMASI</small></span></a><span>© <span id="year"></span> Ikky Media. Hak cipta dilindungi.</span><a href="mailto:redaksi@ikkymedia.id">Hubungi Redaksi ↗</a></div></footer>
 
+  <!-- Public press release submission -->
+  <div class="modal hidden" id="submitModal"><div class="modal-backdrop" data-close="submitModal"></div><section class="submit-panel modal-panel">
+    <button class="close-btn" data-close="submitModal">×</button>
+    <div class="admin-heading"><div class="eyebrow">KONTRIBUSI PUBLIK</div><h2>Kirim <em>Press Release</em></h2><p>Kiriman akan diperiksa redaksi sebelum diterbitkan.</p></div>
+    <form id="submissionForm">
+      <label>Nama pengirim / instansi<input id="submitterName" required maxlength="120" placeholder="Nama lengkap atau instansi"></label>
+      <div class="form-row"><label>Email<input id="submitterEmail" type="email" required maxlength="180" placeholder="email@contoh.com"></label><label>Nomor WhatsApp<input id="submitterPhone" required maxlength="30" placeholder="08xxxxxxxxxx"></label></div>
+      <label>Judul press release<input id="submissionTitle" required maxlength="180" placeholder="Judul berita"></label>
+      <label>Kategori<select id="submissionCategory"><option>Pendidikan</option><option>Teknologi</option><option>Masyarakat</option><option>Kegiatan</option><option>Umum</option></select></label>
+      <label>Ringkasan<input id="submissionExcerpt" maxlength="240" placeholder="Ringkasan singkat"></label>
+      <label>Foto dokumentasi (JPG, PNG, WebP; maks. 5 MB)<input id="submissionImage" type="file" accept="image/jpeg,image/png,image/webp"></label>
+      <label>Isi press release<textarea id="submissionBody" required rows="9" placeholder="Tuliskan isi press release..."></textarea></label>
+      <button type="submit" class="primary-btn full" id="submitPressBtn">Kirim untuk diperiksa <span>→</span></button>
+      <p id="submissionMessage" class="form-message" aria-live="polite"></p>
+    </form>
+  </section></div>
+
   <!-- Article reader -->
   <div class="modal hidden" id="articleModal"><div class="modal-backdrop" data-close="articleModal"></div><article class="reader modal-panel"><button class="close-btn" data-close="articleModal">×</button><div id="readerContent"></div></article></div>
 
@@ -71,7 +88,7 @@
     </div>
     <div id="dashboard" class="hidden">
       <div class="dash-top"><span id="adminIdentity"></span><button class="text-btn" id="logoutBtn">Keluar ↗</button></div>
-      <div class="dash-tabs"><button class="tab active" data-tab="editor">Tulis artikel</button><button class="tab" data-tab="manage">Kelola artikel</button></div>
+      <div class="dash-tabs"><button class="tab active" data-tab="editor">Tulis artikel</button><button class="tab" data-tab="manage">Kelola artikel</button><button class="tab" data-tab="submissions">Kiriman publik</button></div>
       <div id="editorTab">
         <form id="articleForm">
           <input type="hidden" id="articleId">
@@ -90,6 +107,7 @@
         </form>
       </div>
       <div id="manageTab" class="hidden"><div id="adminArticles" class="admin-articles">Memuat artikel...</div></div>
+      <div id="submissionsTab" class="hidden"><div id="publicSubmissions" class="admin-articles">Memuat kiriman...</div></div>
     </div>
   </section></div>
   <div id="toast" class="toast hidden"></div>
