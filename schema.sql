@@ -30,9 +30,19 @@ using ((auth.jwt() ->> 'email') = 'rizkyramadhani0912@gmail.com')
 with check ((auth.jwt() ->> 'email') = 'rizkyramadhani0912@gmail.com');
 
 -- Bucket foto artikel (publik agar foto bisa tampil di halaman berita).
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('article-images', 'article-images', true, 5242880, array['image/jpeg','image/png','image/webp', 'image/heic'])
-on conflict (id) do update set public = true, file_size_limit = 5242880;
+insert into storage.buckets
+(id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'article-images',
+  'article-images',
+  true,
+  5242880,
+  array['image/jpeg','image/png','image/webp','image/heic','image/heif']
+)
+on conflict (id) do update set
+  public = true,
+  file_size_limit = 5242880,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists "Public can view article images" on storage.objects;
 create policy "Public can view article images"
