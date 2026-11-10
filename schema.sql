@@ -26,12 +26,12 @@ using (status = 'published');
 drop policy if exists "Admin can manage articles" on public.articles;
 create policy "Admin can manage articles"
 on public.articles for all
-using ((auth.jwt() ->> 'email') = 'email-admin-kamu@example.com')
-with check ((auth.jwt() ->> 'email') = 'email-admin-kamu@example.com');
+using ((auth.jwt() ->> 'email') = 'rizkyramadhani0912@gmail.com')
+with check ((auth.jwt() ->> 'email') = 'rizkyramadhani0912@gmail.com');
 
 -- Bucket foto artikel (publik agar foto bisa tampil di halaman berita).
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('article-images', 'article-images', true, 5242880, array['image/jpeg','image/png','image/webp'])
+values ('article-images', 'article-images', true, 5242880, array['image/jpeg','image/png','image/webp', 'image/heic'])
 on conflict (id) do update set public = true, file_size_limit = 5242880;
 
 drop policy if exists "Public can view article images" on storage.objects;
@@ -42,15 +42,15 @@ using (bucket_id = 'article-images');
 drop policy if exists "Admin can upload article images" on storage.objects;
 create policy "Admin can upload article images"
 on storage.objects for insert to authenticated
-with check (bucket_id = 'article-images' and (auth.jwt() ->> 'email') = 'email-admin-kamu@example.com');
+with check (bucket_id = 'article-images' and (auth.jwt() ->> 'email') = 'rizkyramadhani0912@gmail.com');
 
 drop policy if exists "Admin can update article images" on storage.objects;
 create policy "Admin can update article images"
 on storage.objects for update to authenticated
-using (bucket_id = 'article-images' and (auth.jwt() ->> 'email') = 'email-admin-kamu@example.com')
-with check (bucket_id = 'article-images' and (auth.jwt() ->> 'email') = 'email-admin-kamu@example.com');
+using (bucket_id = 'article-images' and (auth.jwt() ->> 'email') = 'rizkyramadhani0912@gmail.com')
+with check (bucket_id = 'article-images' and (auth.jwt() ->> 'email') = 'rizkyramadhani0912@gmail.com');
 
 drop policy if exists "Admin can delete article images" on storage.objects;
 create policy "Admin can delete article images"
 on storage.objects for delete to authenticated
-using (bucket_id = 'article-images' and (auth.jwt() ->> 'email') = 'email-admin-kamu@example.com');
+using (bucket_id = 'article-images' and (auth.jwt() ->> 'email') = 'rizkyramadhani0912@gmail.com');
