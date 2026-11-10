@@ -8,6 +8,28 @@
   const placeholder = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450"><rect width="100%" height="100%" fill="#e4ebf3"/><text x="50%" y="52%" text-anchor="middle" font-family="Arial" font-size="46" font-weight="bold" fill="#6680a1">IKKY MEDIA</text></svg>');
   const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const dateText = d => new Date(d).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
+  async function prepareImageFile(file) {
+    if (!file) return null;
+    if (file.size > 5 * 1024 * 1024) throw new Error("Ukuran foto maksimal 5 MB.");
+    const ext = file.name.split(".").pop().toLowerCase();
+    const isHeic = ["heic", "heif"].includes(ext) || ["image/heic", "image/heif"].includes(file.type);
+    if (!isHeic) {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        throw new Error("Foto harus JPG, PNG, WebP, HEIC, atau HEIF.");
+      }
+      return file;
+    }
+    if (typeof window.heic2any !== "function") {
+      throw new Error("Konverter HEIC belum termuat. Muat ulang halaman dan coba lagi.");
+    }
+    const converted = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.88 });
+    const blob = Array.isArray(converted) ? converted[0] : converted;
+    const jpg = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), {
+      type: "image/jpeg", lastModified: Date.now()
+    });
+    if (jpg.size > 5 * 1024 * 1024) throw new Error("Hasil konversi lebih dari 5 MB. Gunakan foto yang lebih kecil.");
+    return jpg;
+  }
   const toast = msg => { $("toast").textContent=msg; $("toast").classList.remove("hidden"); setTimeout(()=>$("toast").classList.add("hidden"),3000); };
   const modal = (id,show) => $(id).classList.toggle("hidden",!show);
   $("today").textContent = new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -45,9 +67,9 @@
     const btn=$("submitPressBtn"),file=$("submissionImage").files[0];btn.disabled=true;$("submissionMessage").textContent="Mengirim press release...";
     try{
       let imageUrl=null;
-      if(file){if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("Foto harus JPG, PNG, atau WebP.");if(file.size>5*1024*1024)throw new Error("Ukuran foto maksimal 5 MB.");
-        const ext=file.name.split(".").pop().toLowerCase(),path=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const {error:upErr}=await client.storage.from("press-release-submissions").upload(path,file,{contentType:file.type,upsert:false});if(upErr)throw upErr;
+      if(file){const uploadFile=await prepareImageFile(file);
+        const ext=uploadFile.type==="image/jpeg"?"jpg":uploadFile.type.split("/")[1],path=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const {error:upErr}=await client.storage.from("press-release-submissions").upload(path,uploadFile,{contentType:uploadFile.type,upsert:false});if(upErr)throw upErr;
         imageUrl=client.storage.from("press-release-submissions").getPublicUrl(path).data.publicUrl;
       }
       const payload={submitter_name:$("submitterName").value.trim(),submitter_email:$("submitterEmail").value.trim(),submitter_phone:$("submitterPhone").value.trim(),title:$("submissionTitle").value.trim(),category:$("submissionCategory").value,excerpt:$("submissionExcerpt").value.trim(),body:$("submissionBody").value.trim(),image_url:imageUrl,status:"pending"};
@@ -74,11 +96,13 @@
     if(error){toast("Login gagal: "+error.message);return;} showDashboard(data.user.email);toast("Berhasil masuk.");
   };
   $("logoutBtn").onclick=async()=>{await client.auth.signOut();$("dashboard").classList.add("hidden");$("loginBox").classList.remove("hidden");toast("Kamu sudah keluar.");};
-  $("articleImage").onchange=()=>{
+  $("articleImage").onchange=async()=>{
     const f=$("articleImage").files[0];if(!f)return;
-    if(!["image/jpeg","image/png","image/webp"].includes(f.type)){toast("Gunakan JPG, PNG, atau WebP.");return;}
-    if(f.size>5*1024*1024){toast("Ukuran foto maksimal 5 MB.");$("articleImage").value="";return;}
-    const url=URL.createObjectURL(f);$("imagePreview").innerHTML=`<img src="${url}" alt="Preview foto">`; $("imagePreview").classList.remove("hidden");
+    try {
+      const previewFile=await prepareImageFile(f);
+      const url=URL.createObjectURL(previewFile);$("imagePreview").innerHTML=`<img src="${url}" alt="Preview foto">`; $("imagePreview").classList.remove("hidden");
+      if(["heic","heif"].includes(f.name.split(".").pop().toLowerCase()))toast("HEIC berhasil dikonversi ke JPG.");
+    } catch(err) { toast(err.message); $("articleImage").value=""; }
   };
   function resetForm(){
     $("articleForm").reset();$("articleId").value="";$("articleAuthor").value="Redaksi Ikky Media";$("imagePreview").classList.add("hidden");selectedImageUrl="";$("cancelEdit").classList.add("hidden");$("saveBtn").innerHTML='Simpan artikel <span>→</span>';$("formMessage").textContent="";
@@ -90,8 +114,9 @@
     $("saveBtn").disabled=true;$("formMessage").textContent="Menyimpan artikel...";
     try{
       if(file){
-        const ext=file.name.split(".").pop().toLowerCase(),path=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const {error:upErr}=await client.storage.from(cfg.STORAGE_BUCKET).upload(path,file,{upsert:false,contentType:file.type});
+        const uploadFile=await prepareImageFile(file);
+        const ext=uploadFile.type==="image/jpeg"?"jpg":uploadFile.type.split("/")[1],path=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const {error:upErr}=await client.storage.from(cfg.STORAGE_BUCKET).upload(path,uploadFile,{upsert:false,contentType:uploadFile.type});
         if(upErr)throw upErr;
         const {data}=client.storage.from(cfg.STORAGE_BUCKET).getPublicUrl(path);imageUrl=data.publicUrl;
       }

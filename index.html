@@ -66,7 +66,7 @@
       <label>Judul press release<input id="submissionTitle" required maxlength="180" placeholder="Judul berita"></label>
       <label>Kategori<select id="submissionCategory"><option>Pendidikan</option><option>Teknologi</option><option>Masyarakat</option><option>Kegiatan</option><option>Umum</option></select></label>
       <label>Ringkasan<input id="submissionExcerpt" maxlength="240" placeholder="Ringkasan singkat"></label>
-      <label>Foto dokumentasi (JPG, PNG, WebP; maks. 5 MB)<input id="submissionImage" type="file" accept="image/jpeg,image/png,image/webp"></label>
+      <label>Foto dokumentasi (JPG, PNG, WebP, HEIC, HEIF; maks. 5 MB)<input id="submissionImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"></label>
       <label>Isi press release<textarea id="submissionBody" required rows="9" placeholder="Tuliskan isi press release..."></textarea></label>
       <button type="submit" class="primary-btn full" id="submitPressBtn">Kirim untuk diperiksa <span>→</span></button>
       <p id="submissionMessage" class="form-message" aria-live="polite"></p>
@@ -98,7 +98,7 @@
             <label>Penulis<input id="articleAuthor" maxlength="80" value="Redaksi Ikky Media"></label>
           </div>
           <label>Ringkasan<input id="articleExcerpt" maxlength="240" placeholder="Ringkasan singkat untuk halaman utama"></label>
-          <label>Foto utama<input id="articleImage" type="file" accept="image/png,image/jpeg,image/webp,image/heic"></label>
+          <label>Foto utama<input id="articleImage" type="file" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif"></label>
           <div id="imagePreview" class="image-preview hidden"></div>
           <label>Isi artikel<textarea id="articleBody" required rows="10" placeholder="Tulis isi artikel di sini..."></textarea></label>
           <div class="form-row status-row"><label>Status<select id="articleStatus"><option value="draft">Simpan sebagai draft</option><option value="published">Publikasikan</option></select></label><span class="form-note">Artikel publik akan tampil di beranda.</span></div>
@@ -111,6 +111,7 @@
     </div>
   </section></div>
   <div id="toast" class="toast hidden"></div>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
