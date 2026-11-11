@@ -54,10 +54,21 @@
     allArticles=data||[];renderArticles();
   }
   function openArticle(id) {
-    const a=allArticles.find(x=>String(x.id)===String(id)); if(!a)return;
+    const a=allArticles.find(x=>String(x.id)===String(id) || String(x.slug)===String(id)); if(!a)return;
     $("readerContent").innerHTML=`<div class="eyebrow">${escapeHtml(a.category)}</div><h1>${escapeHtml(a.title)}</h1><div class="reader-meta">Oleh ${escapeHtml(a.author||"Redaksi Ikky Media")} · ${dateText(a.published_at||a.created_at)}</div>${a.image_url?`<img src="${escapeHtml(a.image_url)}" alt="${escapeHtml(a.title)}">`:""}<div class="reader-body">${escapeHtml(a.body)}</div>`;
-    modal("articleModal",true);history.replaceState(null,"",`#artikel-${encodeURIComponent(a.slug||a.id)}`);
+    modal("articleModal",true);
+    const articleHash=`#artikel-${encodeURIComponent(a.slug||a.id)}`;
+    if(location.hash!==articleHash) history.replaceState(null,"",articleHash);
   }
+  function openArticleFromLink() {
+    const match=location.hash.match(/^#artikel-(.+)$/);
+    if(!match || !allArticles.length)return;
+    let key=match[1];
+    try { key=decodeURIComponent(key); } catch (_) {}
+    const article=allArticles.find(a=>String(a.slug)===key || String(a.id)===key);
+    if(article) openArticle(article.id);
+  }
+  window.addEventListener("hashchange",openArticleFromLink);
   $("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;currentCategory=b.dataset.category;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===b));renderArticles();});
   $("adminOpen").onclick=()=>{modal("adminModal",true);refreshAuth();};
   $("menuBtn").onclick=()=>$("mainNav").classList.toggle("open");
@@ -163,5 +174,5 @@
     if(!confirm("Hapus artikel ini? Tindakan ini tidak bisa dibatalkan."))return;
     const {error}=await client.from("articles").delete().eq("id",id);if(error){toast("Gagal menghapus: "+error.message);return;}toast("Artikel dihapus.");await loadAdminArticles();await loadPublic();
   }
-  loadPublic();
+  loadPublic().then(openArticleFromLink);
 })();
